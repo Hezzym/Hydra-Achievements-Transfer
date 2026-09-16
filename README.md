@@ -51,7 +51,7 @@ py main.py
 No. The program does not modify any Steam files or game files. The entire process only extracts public data through the Steam Web API.
 
 **Can I use an API key from a secondary account?**
-Yes, but the User ID field must be filled in with your real/main account. The API key itself can be any valid key.
+Yes, but the SteamID field must be filled in with your real/main account. The API key itself can be any valid key.
 
 ## AI Disclaimer
 
@@ -59,4 +59,4 @@ This software was built with the help of AI. I chose this approach to save time,
 
 ## License
 
-Licensed under the [GNU General Public License v3.0](LICENSE.md).
+Licensed under the [GNU General Public License v3.0](LICENSE).
