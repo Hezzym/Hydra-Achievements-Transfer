@@ -1,0 +1,13 @@
+{
+  "api_key": "",
+  "steam_id": "",
+  "save_data": false,
+  "create_name_file": true,
+  "ignore_unplayed": true,
+  "achievements_cache_ttl": 60,
+  "window_size": [
+    1280,
+    720
+  ],
+  "window_maximized": false
+}
