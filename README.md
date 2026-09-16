@@ -21,6 +21,7 @@ It does **not** bundle or use Goldberg Steam Emulator itself, it only performs t
 - ⚡ Lightweight, no unnecessary bloat
 
 ![Main window](images/screenshot.png)
+[Guide](GUIDE)
 
 ## Requirements
 
@@ -58,4 +59,4 @@ This software was built with the help of AI. I chose this approach to save time,
 
 ## License
 
-Licensed under the [GNU General Public License v3.0](https://github.com/Hezzym/Hydra-Achievements-Transfer/blob/main/LICENSE).
+Licensed under the [GNU General Public License v3.0](LICENSE.md).
