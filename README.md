@@ -21,7 +21,7 @@ It does **not** bundle or use Goldberg Steam Emulator itself, it only performs t
 - ⚡ Lightweight, no unnecessary bloat
 
 ![Main window](images/screenshot.png)
-[Guide](GUIDE)
+[Guide](GUIDE.md)
 
 ## Requirements
 
