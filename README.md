@@ -56,4 +56,4 @@ This software was built with the help of AI. I chose this approach to save time,
 
 ## License
 
-Licensed under the [GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0.html).
+Licensed under the [GNU General Public License v3.0](https://github.com/Hezzym/Hydra-Achievements-Transfer/blob/main/LICENSE).
