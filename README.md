@@ -20,6 +20,8 @@ It does **not** bundle or use Goldberg Steam Emulator itself, it only performs t
 - 💾 Built-in backup system before overwriting existing data
 - ⚡ Lightweight, no unnecessary bloat
 
+![Main window](images/screenshot.png)
+
 ## Requirements
 
 - Python 3.9+
