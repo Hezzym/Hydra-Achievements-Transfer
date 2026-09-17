@@ -640,13 +640,19 @@ class MainWindow(QMainWindow):
             return
 
         self._set_status("Fetching all games from your account...")
-        self.button_fetch_owned_games.setEnabled(False)
+        self._set_fetch_in_progress(True)
 
         self._owned_games_worker = OwnedGamesWorker(api_key, steam_id, parent=self)
         self._owned_games_worker.succeeded.connect(self._on_owned_games_fetched)
         self._owned_games_worker.failed.connect(self._on_owned_games_failed)
         self._owned_games_worker.finished.connect(self._on_owned_games_worker_finished)
         self._owned_games_worker.start()
+
+    def _set_fetch_in_progress(self, in_progress: bool) -> None:
+        """Blocks the transfer actions while the account games are being fetched."""
+        self.button_fetch_owned_games.setEnabled(not in_progress)
+        self.button_fetch_save.setEnabled(not in_progress)
+        self.button_save_all.setEnabled(not in_progress)
 
     def _on_owned_games_worker_finished(self) -> None:
         # Drop the reference first (the C++ object is about to be deleted),
@@ -655,10 +661,9 @@ class MainWindow(QMainWindow):
         self._owned_games_worker = None
         if worker is not None:
             worker.deleteLater()
+        self._set_fetch_in_progress(False)
 
     def _on_owned_games_fetched(self, games: list[dict]) -> None:
-        self.button_fetch_owned_games.setEnabled(True)
-
         entries = [self._game_entry(g) for g in games]
         
         # Only games with visible community stats are kept.
@@ -700,7 +705,6 @@ class MainWindow(QMainWindow):
         QMessageBox.information(self, APP_TITLE, message)
 
     def _on_owned_games_failed(self, error: str) -> None:
-        self.button_fetch_owned_games.setEnabled(True)
         self._notify_error(f"Error: {error}")
 
     def _on_fetch_save_clicked(self) -> None:
