@@ -35,7 +35,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from core import cache, settings, steam_paths
+from core import appid_log, cache, settings, steam_paths
 from core.constants import (
     APIKEY_URL,
     APP_NAME,
@@ -664,13 +664,15 @@ class MainWindow(QMainWindow):
         # Only games with visible community stats are kept.
         without_stats = [g for g in entries if not g.get("has_community_visible_stats", False)]
         ignored_no_stats = len(without_stats)
+        appid_log.log_no_community_stats([g["appid"] for g in without_stats])
         entries = [g for g in entries if g.get("has_community_visible_stats", False)]
-        
+
         ignored = 0
         if self.checkbox_ignore_unplayed.isChecked():
-            kept = [g for g in entries if g.get("playtime_forever", 0) > 0]
-            ignored = len(entries) - len(kept)
-            entries = kept
+            unplayed = [g for g in entries if g.get("playtime_forever", 0) <= 0]
+            ignored = len(unplayed)
+            appid_log.log_unplayed([g["appid"] for g in unplayed])
+            entries = [g for g in entries if g.get("playtime_forever", 0) > 0]
 
         self.all_games = entries
         self.selected_appids = []
@@ -800,6 +802,7 @@ class MainWindow(QMainWindow):
         self._no_achievement_appids = []
         if not removed:
             return []
+        appid_log.log_no_achievements(removed)
 
         removed_set = set(removed)
         new_all_games = [g for g in self.all_games if g["appid"] not in removed_set]

@@ -12,7 +12,7 @@ from queue import Empty, Queue
 
 from PySide6.QtCore import QThread, Signal
 
-from core import achievements, cache, steam_api
+from core import achievements, appid_log, cache, steam_api
 
 logger = logging.getLogger(__name__)
 
@@ -216,17 +216,20 @@ class BatchFetchAndSaveAchievementsWorker(QThread):
                 else:
                     limiter.note_success()
                 failures.append((label, message))
+                appid_log.log_failure([appid], "RateLimit" if rate_limited else type(exc).__name__)
                 if rate_limited:
                     for skipped_appid, skipped_name in self.items[index:]:
                         failures.append(
                             (skipped_name or skipped_appid, "Skipped: Steam API rate limit reached.")
                         )
+                        appid_log.log_failure([skipped_appid], "Skipped (rate limit)")
                     break
                 continue
             except Exception as exc:  # extra safety against unexpected errors
                 logger.exception("Unexpected error fetching achievements for appid %s", appid)
                 limiter.note_success()
                 failures.append((label, str(exc)))
+                appid_log.log_failure([appid], type(exc).__name__)
                 continue
             finally:
                 limiter.record()
@@ -275,6 +278,7 @@ class BatchFetchAndSaveAchievementsWorker(QThread):
                 except Exception as exc:
                     logger.exception("Failed to save achievements for appid %s", appid)
                     failures.append((label, str(exc)))
+                    appid_log.log_failure([appid], type(exc).__name__, api="")
 
         pending = [
             appid

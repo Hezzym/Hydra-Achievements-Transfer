@@ -8,7 +8,13 @@ __pycache__/
 config.json
 gse_backup.zip
 hydra.log*
+# Temporary diagnostic log (core/appid_log.py)
+appid_failed.txt
 build/
 dist/
 .pytest_cache/
 .ruff_cache/
+
+AGENTS.md
+.github/instructions/memory.instruction.md
+
