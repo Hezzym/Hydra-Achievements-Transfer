@@ -385,6 +385,7 @@ class MainWindow(QMainWindow):
             "name": game.get("name", appid),
             "playtime_forever": playtime,
             "installed": appid in getattr(self, "_installed_ids", set()),
+            "has_community_visible_stats": bool(game.get("has_community_visible_stats", False)),
         }
 
     # --------------------------------------------------------------- grid/cards
@@ -659,6 +660,12 @@ class MainWindow(QMainWindow):
         self.button_fetch_owned_games.setEnabled(True)
 
         entries = [self._game_entry(g) for g in games]
+        
+        # Only games with visible community stats are kept.
+        without_stats = [g for g in entries if not g.get("has_community_visible_stats", False)]
+        ignored_no_stats = len(without_stats)
+        entries = [g for g in entries if g.get("has_community_visible_stats", False)]
+        
         ignored = 0
         if self.checkbox_ignore_unplayed.isChecked():
             kept = [g for g in entries if g.get("playtime_forever", 0) > 0]
@@ -680,9 +687,12 @@ class MainWindow(QMainWindow):
 
         self._apply_filter_and_reload()
 
-        message = f"Account games fetched and cached ({len(self.all_games)} game(s))."
+        message = f"\n"
         if ignored:
-            message += f"\n{ignored} unplayed game(s) were ignored."
+            message += f"{ignored} unplayed game(s) were ignored."
+        if ignored_no_stats:
+            message += f"\n{ignored_no_stats} game(s) without community visible stats were ignored."
+        message += f"\n\nAccount games fetched and cached ({len(self.all_games)} game(s))."
         self._set_status(message)
         sounds.play_success()
         QMessageBox.information(self, APP_TITLE, message)
