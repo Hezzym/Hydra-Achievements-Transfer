@@ -691,7 +691,7 @@ class MainWindow(QMainWindow):
         if ignored:
             message += f"{ignored} unplayed game(s) were ignored."
         if ignored_no_stats:
-            message += f"\n{ignored_no_stats} game(s) without community visible stats were ignored."
+            message += f"\n{ignored_no_stats} game(s) without Steam achievements were ignored."
         message += f"\n\nAccount games fetched and cached ({len(self.all_games)} game(s))."
         self._set_status(message)
         sounds.play_success()
