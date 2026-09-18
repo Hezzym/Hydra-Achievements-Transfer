@@ -298,10 +298,10 @@ class MainWindow(QMainWindow):
         self.button_resume.setVisible(False)
         footer_buttons.addWidget(self.button_resume, stretch=1)
 
-        root_layout.addLayout(footer_buttons)
-
         self.status_label = QLabel("Ready.")
         root_layout.addWidget(self.status_label)
+
+        root_layout.addLayout(footer_buttons)
 
     # ------------------------------------------------------------- estado inicial
 
