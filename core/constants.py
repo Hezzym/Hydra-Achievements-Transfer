@@ -3,8 +3,8 @@ Constantes globais do programa: metadados e URLs externas.
 """
 from __future__ import annotations
 
-APP_NAME = "Hydra Achievements Transfer"
-APP_VERSION = "1.0"
+APP_NAME = "Hydra Achievements Transfer v1.1"
+APP_VERSION = "1.1"
 AUTHOR = "Hezzym"
 GITHUB_URL = "https://github.com/Hezzym/Hydra-Achievements-Transfer/"
 
