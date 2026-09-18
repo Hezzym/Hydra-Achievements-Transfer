@@ -10,6 +10,7 @@ from PySide6.QtCore import QObject, Signal
 from PySide6.QtWidgets import QMessageBox
 
 from core.constants import APP_NAME
+from ui import sounds
 from ui.progress_dialog import ProgressDialog
 from ui.workers import BatchFetchAndSaveAchievementsWorker
 
@@ -70,7 +71,14 @@ class BatchRunner(QObject):
             return
         proceed = True
         if any(gained or lost or is_new for _label, gained, lost, is_new in diffs):
-            proceed = self._confirm_changes(diffs)
+            # If the program is minimized, a modal confirmation would be
+            # invisible and the batch would wait forever (the write phase never
+            # runs), besides defeating running in the background. In that case
+            # continue straight away; the result is reported at the end.
+            owner = self._dialog.parentWidget() if self._dialog is not None else self.parent()
+            minimized = bool(getattr(owner, "isMinimized", None) and owner.isMinimized())
+            if not minimized:
+                proceed = self._confirm_changes(diffs)
         worker.resolve_preview(proceed)
 
     def _confirm_changes(self, diffs: list) -> bool:
@@ -96,6 +104,7 @@ class BatchRunner(QObject):
         )
 
         parent = self._dialog if self._dialog is not None else self.parent()
+        sounds.play_info()
         answer = QMessageBox.question(
             parent,
             APP_NAME,

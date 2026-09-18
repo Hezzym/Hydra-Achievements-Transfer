@@ -113,6 +113,7 @@ class BatchMixin:
             self._notify_error("Please select at least one game or fill in an App ID.")
             return
 
+        sounds.play_info()
         confirm = QMessageBox.question(
             self,
             APP_TITLE,
@@ -131,6 +132,7 @@ class BatchMixin:
             return
 
         count = len(self.all_games)
+        sounds.play_info()
         confirm = QMessageBox.question(
             self,
             APP_TITLE,

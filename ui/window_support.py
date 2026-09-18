@@ -207,11 +207,10 @@ class WindowSupportMixin:
         return QGuiApplication.applicationState() != Qt.ApplicationActive
 
     def _show_notification(self, message: str) -> None:
-        """Send the batch result to the system tray, flashing the taskbar as fallback."""
-        if self._tray is not None and self._tray.isVisible():
+        """Send the batch result to the system tray, flashing the taskbar too."""
+        if self._tray is not None:
             self._tray.showMessage(APP_TITLE, message, QSystemTrayIcon.Information, 5000)
-        else:
-            QApplication.alert(self, 0)
+        QApplication.alert(self, 0)
 
     def _notify_error(self, message: str) -> None:
         """Erro reportado nas 3 camadas: status, som e popup."""

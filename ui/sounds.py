@@ -16,6 +16,7 @@ from PySide6.QtMultimedia import QSoundEffect
 SOUNDS_DIR = Path(__file__).resolve().parent.parent / "assets" / "sounds"
 
 _effects: dict[str, QSoundEffect] = {}
+_pending: set[str] = set()
 
 
 def _get_effect(name: str) -> QSoundEffect | None:
@@ -33,19 +34,44 @@ def _get_effect(name: str) -> QSoundEffect | None:
     return effect
 
 
-def play_success() -> None:
-    effect = _get_effect("success")
-    if effect is not None:
+def preload() -> None:
+    """Create every effect up front so the first play() is not dropped.
+
+    QSoundEffect loads the file asynchronously; a play() call made while the
+    effect is still "Loading" is silently ignored. Loading them at startup
+    makes them "Ready" long before the first feedback sound is needed.
+    """
+    for name in ("success", "error", "info"):
+        _get_effect(name)
+
+
+def _play(name: str) -> None:
+    effect = _get_effect(name)
+    if effect is None:
+        return
+    if effect.status() == QSoundEffect.Ready:
         effect.play()
+        return
+    # Still loading: play it as soon as it becomes ready (safety net).
+    if name in _pending:
+        return
+    _pending.add(name)
+
+    def _on_status_changed() -> None:
+        if effect.status() == QSoundEffect.Ready:
+            _pending.discard(name)
+            effect.play()
+
+    effect.statusChanged.connect(_on_status_changed)
+
+
+def play_success() -> None:
+    _play("success")
 
 
 def play_error() -> None:
-    effect = _get_effect("error")
-    if effect is not None:
-        effect.play()
+    _play("error")
 
 
 def play_info() -> None:
-    effect = _get_effect("info")
-    if effect is not None:
-        effect.play()
+    _play("info")
