@@ -19,7 +19,15 @@ from __future__ import annotations
 import re
 
 from PySide6.QtCore import QItemSelection, QItemSelectionModel, Qt, QTimer, QUrl
-from PySide6.QtGui import QColor, QDesktopServices, QIcon, QPainter, QPen, QPixmap
+from PySide6.QtGui import (
+    QColor,
+    QDesktopServices,
+    QGuiApplication,
+    QIcon,
+    QPainter,
+    QPen,
+    QPixmap,
+)
 from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -31,6 +39,7 @@ from PySide6.QtWidgets import (
     QMenuBar,
     QMessageBox,
     QPushButton,
+    QSystemTrayIcon,
     QVBoxLayout,
     QWidget,
 )
@@ -118,6 +127,7 @@ class MainWindow(QMainWindow):
         self._cover_workers: list[CoverDownloadWorker] = []
         self._owned_games_worker: OwnedGamesWorker | None = None
         self._batch_runner = BatchRunner(self)
+        self._tray: QSystemTrayIcon | None = None
         self._backup_window: BackupWindow | None = None
         self._about_window: AboutWindow | None = None
         self._settings_window: SettingsWindow | None = None
@@ -134,6 +144,7 @@ class MainWindow(QMainWindow):
         self._batch_runner.no_unlocked.connect(self._on_no_unlocked)
         self._batch_runner.pending.connect(self._on_batch_pending)
         self._batch_runner.completed.connect(self._on_batch_completed)
+        self._setup_tray()
         self._load_initial_state()
         self._purge_expired_achievements_cache()
 
@@ -931,6 +942,17 @@ class MainWindow(QMainWindow):
             popup_text += "\n\n"
         popup_text += saved_line
 
+        # Additional system-tray notification, only when the window is
+        # minimized or in the background. The popup below is kept unchanged.
+        if self._is_in_background():
+            notify_parts: list[str] = []
+            if canceled:
+                notify_parts.append("Canceled.")
+            if failed:
+                notify_parts.append(f"{failed} game(s) failed.")
+            notify_parts.append(saved_line)
+            self._show_notification("\n".join(notify_parts))
+
         if severity == "error":
             sounds.play_error()
             QMessageBox.critical(self, APP_TITLE, popup_text)
@@ -984,6 +1006,27 @@ class MainWindow(QMainWindow):
         self.status_label.setProperty("role", "status_error" if error else "status_success")
         self.status_label.style().unpolish(self.status_label)
         self.status_label.style().polish(self.status_label)
+
+    def _setup_tray(self) -> None:
+        """Create the tray icon used for background notifications, if available."""
+        if not QSystemTrayIcon.isSystemTrayAvailable():
+            return
+        self._tray = QSystemTrayIcon(QApplication.windowIcon(), self)
+        self._tray.setToolTip(APP_TITLE)
+        self._tray.show()
+
+    def _is_in_background(self) -> bool:
+        """True when the user is not looking at the window (minimized/unfocused)."""
+        if self.isMinimized():
+            return True
+        return QGuiApplication.applicationState() != Qt.ApplicationActive
+
+    def _show_notification(self, message: str) -> None:
+        """Send the batch result to the system tray, flashing the taskbar as fallback."""
+        if self._tray is not None and self._tray.isVisible():
+            self._tray.showMessage(APP_TITLE, message, QSystemTrayIcon.Information, 5000)
+        else:
+            QApplication.alert(self, 0)
 
     def _notify_error(self, message: str) -> None:
         """Erro reportado nas 3 camadas: status, som e popup."""
