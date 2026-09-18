@@ -192,7 +192,7 @@ class LibraryMixin:
     def _on_open_steam_link(self, appid: str) -> None:
         steam_id = self.field_userid.text()
         if not steam_id:
-            self._notify_error("Fill in the SteamID to open the Steam page.")
+            self._notify_error("Fill in the SteamID64 to open the Steam page.")
             return
         url = STEAM_ACHIEVEMENTS_URL.format(steam_id=steam_id, appid=appid)
         QDesktopServices.openUrl(QUrl(url))

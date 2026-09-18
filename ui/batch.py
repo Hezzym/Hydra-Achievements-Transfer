@@ -15,7 +15,7 @@ class BatchMixin:
         api_key = self.field_apikey.text()
         steam_id = self.field_userid.text()
         if not api_key or not steam_id:
-            self._notify_error("Please fill in App ID, API Key and SteamID.")
+            self._notify_error("Please fill in App ID, API Key and SteamID64.")
             return
 
         cache.clear_achievements_cache()
@@ -149,11 +149,11 @@ class BatchMixin:
         steam_id = self.field_userid.text()
 
         if not api_key or not steam_id:
-            self._notify_error("Please fill in API Key and SteamID.")
+            self._notify_error("Please fill in API Key and SteamID64.")
             return
 
         if not steam_id.isdigit():
-            self._notify_error(f"Invalid SteamID: '{steam_id}' (must contain only numbers).")
+            self._notify_error(f"Invalid SteamID64: '{steam_id}' (must contain only numbers).")
             return
 
         invalid = [appid for appid in appids if not appid.isdigit()]

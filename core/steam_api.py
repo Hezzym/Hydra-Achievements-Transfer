@@ -199,6 +199,6 @@ def get_owned_games(api_key: str, steam_id: str) -> list[dict]:
     if games is None:
         raise SteamAPIError(
             "No games found. Check that your Steam profile is public and that "
-            "the API key/SteamID are correct."
+            "the API key/SteamID64 are correct."
         )
     return games

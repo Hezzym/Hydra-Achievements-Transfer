@@ -3,7 +3,7 @@ Fixed UI strings, centralized to avoid duplication.
 """
 from __future__ import annotations
 
-FETCH_TRANSFER = "Fetch && Transfer Achievements"
+FETCH_TRANSFER = "Transfer Selected Games"
 TRANSFER_ALL = "Transfer All Account Games"
 RESUME_BATCH = "Resume interrupted"
 
@@ -28,10 +28,10 @@ FIELD_APPID_LINK = "Find on SteamDB"
 FIELD_APPID_PLACEHOLDER = "e.g. 240, 620, 440"
 FIELD_APIKEY = "API Key"
 FIELD_APIKEY_LINK = "Get your API key"
-FIELD_USERID = "SteamID"
-FIELD_USERID_LINK = "Find your SteamID"
+FIELD_USERID = "SteamID64"
+FIELD_USERID_LINK = "Find your SteamID64"
 
-SAVE_API_CHECKBOX = "Save API Key and SteamID"
+SAVE_API_CHECKBOX = "Save API Key and SteamID64"
 CREATE_NAME_CHECKBOX = "Create a game file in each folder"
 CREATE_NAME_HELP_TITLE = "Game name file"
 CREATE_NAME_HELP = (
