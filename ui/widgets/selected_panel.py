@@ -86,7 +86,7 @@ class SelectedPanel(QWidget):
         self._chips = QWidget()
         self._chips.setObjectName("SelectedChips")
         self._chips_layout = QHBoxLayout(self._chips)
-        self._chips_layout.setContentsMargins(0, 0, 0, 0)
+        self._chips_layout.setContentsMargins(0, 0, 0, 4)
         self._chips_layout.setSpacing(6)
         self._chips_layout.addStretch(1)
         self._scroll.setWidget(self._chips)
