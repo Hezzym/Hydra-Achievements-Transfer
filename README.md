@@ -2,6 +2,8 @@
 
 > Desktop tool to edit and transfer Steam achievements for games using **GSE Saves** (Goldberg Steam Emulator), pulling real account data via the **Steam Web API**.
 
+**I'm not sure if I'll continue this project. Hydra recently added a native function, and while this program still has some advantages for now, I've lost the motivation to keep working on it.**
+
 [![Python](https://img.shields.io/badge/Python-3.9%2B-blue)](https://www.python.org/)
 [![PySide6](https://img.shields.io/badge/UI-PySide6%20%2F%20Qt-green)](https://doc.qt.io/qtforpython/)
 [![License](https://img.shields.io/badge/license-GPLv3-lightgrey)](#license)
@@ -19,6 +21,7 @@ It does **not** bundle or use Goldberg Steam Emulator itself, it only performs t
 - 📁 Writes the converted file straight into the game's GSE Saves folder
 - 💾 Built-in backup system before overwriting existing data
 - ⚡ Lightweight, no unnecessary bloat
+- 🔓 No login required
 
 ![Main window](images/screenshot.png)
 [Guide](GUIDE.md)
@@ -54,13 +57,13 @@ No. The program does not modify any Steam files or game files. The entire proces
 Yes, but the SteamID field must be filled in with your real/main account. The API key itself can be any valid key.
 
 ## To do List
-* [ ] - Improve the search system and avoid unnecessary games in the list.
-
+* [x] - Improve the search system and avoid unnecessary games in the list.
+* [ ] - Epic Games and PlayStation Support
 * [ ] - Linux support (Not guaranteed).
 
 ## AI Disclaimer
 
-This software was built with the help of AI. I chose this approach to save time, since I'm quite rusty when it comes to programming, this was my first experience creating something with AI, and my total budget was just $2. So don't expect a top-tier project. That said, I used some of my own programming knowledge to try to make something reasonably well-structured, rather than just a generic prompt output. Despite all of this, it's a functional program that does what I set out to build.
+This software was built with the help of AI. I chose this approach to save time, since I'm quite rusty when it comes to programming, this was my first experience creating something with AI.
 
 ## License
 
