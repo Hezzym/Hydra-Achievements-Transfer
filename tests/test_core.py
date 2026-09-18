@@ -28,7 +28,7 @@ class FakeResponse:
 
 class ParseAppIdsTest(unittest.TestCase):
     def test_parse(self):
-        from ui.main_window import parse_appids
+        from ui.helpers import parse_appids
 
         self.assertEqual(parse_appids("111,222 333"), ["111", "222", "333"])
         self.assertEqual(parse_appids("1;2,1"), ["1", "2"])
