@@ -643,6 +643,8 @@ class MainWindow(QMainWindow):
             self._notify_error("Please fill in App ID, API Key and SteamID.")
             return
 
+        cache.clear_achievements_cache()
+
         self._set_status("Fetching all games from your account...")
         self._set_fetch_in_progress(True)
 
@@ -669,7 +671,7 @@ class MainWindow(QMainWindow):
 
     def _on_owned_games_fetched(self, games: list[dict]) -> None:
         entries = [self._game_entry(g) for g in games]
-        
+
         # Only games with visible community stats are kept.
         without_stats = [g for g in entries if not g.get("has_community_visible_stats", False)]
         ignored_no_stats = len(without_stats)
@@ -698,7 +700,7 @@ class MainWindow(QMainWindow):
 
         self._apply_filter_and_reload()
 
-        message = f"\n"
+        message = "\n"
         if ignored:
             message += f"{ignored} unplayed game(s) were ignored."
         if ignored_no_stats:

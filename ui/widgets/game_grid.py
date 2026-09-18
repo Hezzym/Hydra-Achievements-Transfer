@@ -42,6 +42,9 @@ NAME_ROLE = Qt.UserRole + 2
 COVER_ROLE = Qt.UserRole + 3
 PLAYTIME_ROLE = Qt.UserRole + 4
 
+# Reused as the default `parent` argument (never constructed in the signature).
+INVALID_INDEX = QModelIndex()
+
 LINK_TEXT = "Steam achievements"
 LOAD_MORE_TEXT = "Load more"
 LOAD_MORE_AREA = 52  # strip reserved at the bottom while the button is shown
@@ -113,7 +116,7 @@ class GameListModel(QAbstractListModel):
         self._row_by_appid: dict[str, int] = {}
         self._covers: dict[str, QPixmap] = {}
 
-    def rowCount(self, parent=QModelIndex()) -> int:
+    def rowCount(self, parent=INVALID_INDEX) -> int:
         return 0 if parent.isValid() else len(self._games)
 
     def data(self, index: QModelIndex, role: int = Qt.DisplayRole):
