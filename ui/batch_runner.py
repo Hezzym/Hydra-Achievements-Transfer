@@ -104,7 +104,13 @@ class BatchRunner(QObject):
         )
 
         parent = self._dialog if self._dialog is not None else self.parent()
-        sounds.play_info()
+        owner = self._dialog.parentWidget() if self._dialog is not None else None
+        sounds.play_success()
+        is_background = getattr(owner, "_is_in_background", None)
+        if callable(is_background) and is_background():
+            notify = getattr(owner, "_show_notification", None)
+            if callable(notify):
+                notify(f"This will write achievements for {len(diffs)} game(s).")
         answer = QMessageBox.question(
             parent,
             APP_NAME,
