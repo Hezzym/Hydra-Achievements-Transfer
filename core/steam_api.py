@@ -39,6 +39,15 @@ class GameHasNoStats(SteamAPIError):
     """
 
 
+class GameStatsPrivate(SteamAPIError):
+    """
+    The queried game's stats are private (HTTP 403).
+
+    Not a global failure: only that specific game is inaccessible, so it can
+    be counted/ignored while the other games keep being processed.
+    """
+
+
 def _build_session(total_retries: int = 3, backoff_factor: float = 0.5) -> requests.Session:
     session = requests.Session()
     retry = Retry(
@@ -81,6 +90,7 @@ def _get(
     params: dict,
     forbidden_hint: str | None = None,
     bad_request_means_no_stats: bool = False,
+    forbidden_means_private: bool = False,
 ) -> dict:
     for attempt in range(RATE_LIMIT_RETRIES + 1):
         try:
@@ -104,6 +114,8 @@ def _get(
         if response.status_code == 403:
             hint = forbidden_hint or "Invalid API key or insufficient permissions."
             logger.warning("Steam API returned 403 for %s", url)
+            if forbidden_means_private:
+                raise GameStatsPrivate(f"{hint} (HTTP 403)")
             raise SteamAPIError(f"{hint} (HTTP 403) Parameters sent: {_mask_key(params)}")
         if response.status_code == 400:
             # For the achievements endpoint, an HTTP 400 usually means the
@@ -143,6 +155,7 @@ def get_player_achievements(appid: str, api_key: str, steam_id: str) -> dict:
         {"appid": appid, "key": api_key, "steamid": steam_id},
         forbidden_hint=forbidden_hint,
         bad_request_means_no_stats=True,
+        forbidden_means_private=True,
     )
 
     playerstats = data.get("playerstats", {})
@@ -152,8 +165,9 @@ def get_player_achievements(appid: str, api_key: str, steam_id: str) -> dict:
         if "no stats" in lowered or "no achievements" in lowered:
             raise GameHasNoStats(error_message)
         if "not public" in lowered:
-            error_message += (
-                " Make sure the profile AND the game stats are public "
+            raise GameStatsPrivate(
+                error_message
+                + " Make sure the profile AND the game stats are public "
                 "(Profile > Edit profile > Privacy settings). If you just "
                 "changed this, Steam may take a few minutes to update."
             )

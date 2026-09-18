@@ -107,6 +107,7 @@ class MainWindow(QMainWindow):
         self.loaded_count = 0
         self.selected_appids: list[str] = []
         self._no_achievement_appids: list[str] = []
+        self._private_appids: list[str] = []
         self._pending_appids: list[str] = []
         self._syncing_selection = False
 
@@ -128,6 +129,7 @@ class MainWindow(QMainWindow):
         self._build_ui()
         self._restore_window_size()
         self._batch_runner.no_achievements.connect(self._on_no_achievements)
+        self._batch_runner.private_stats.connect(self._on_private_stats)
         self._batch_runner.pending.connect(self._on_batch_pending)
         self._batch_runner.completed.connect(self._on_batch_completed)
         self._load_initial_state()
@@ -767,6 +769,7 @@ class MainWindow(QMainWindow):
         items = [(appid, name_by_appid.get(appid, appid)) for appid in appids]
 
         self._no_achievement_appids = []
+        self._private_appids = []
         self._pending_appids = []
         self._update_resume_button()
         self._batch_runner.start(
@@ -780,6 +783,9 @@ class MainWindow(QMainWindow):
 
     def _on_no_achievements(self, appid: str) -> None:
         self._no_achievement_appids.append(appid)
+
+    def _on_private_stats(self, appids: list) -> None:
+        self._private_appids = [str(appid) for appid in appids]
 
     def _on_batch_pending(self, appids: list) -> None:
         self._pending_appids = [str(appid) for appid in appids]
@@ -796,19 +802,14 @@ class MainWindow(QMainWindow):
         if self._pending_appids:
             self._start_batch(list(self._pending_appids))
 
-    def _prune_no_achievement_games(self) -> list[str]:
+    def _prune_games_from_list(self, appids: list[str]) -> None:
         """
-        Removes the games found to have no achievements from the list, leaving
-        only games that actually have achievements. Persists the cache when
-        the list came from the API.
+        Removes the given AppIDs from the loaded list, without rebuilding the
+        rest. Persists the cache when the list came from the API.
         """
-        removed = list(self._no_achievement_appids)
-        self._no_achievement_appids = []
-        if not removed:
-            return []
-        appid_log.log_no_achievements(removed)
-
-        removed_set = set(removed)
+        if not appids:
+            return
+        removed_set = set(appids)
         new_all_games = [g for g in self.all_games if g["appid"] not in removed_set]
         if len(new_all_games) != len(self.all_games):
             self.all_games = new_all_games
@@ -823,16 +824,36 @@ class MainWindow(QMainWindow):
             except OSError:
                 pass
 
-        return removed
+    def _prune_removed_games(self) -> tuple[list[str], list[str]]:
+        """
+        Removes from the list the games dropped in the last batch: those with
+        no achievements and those with private stats.
+
+        Returns (no_achievements, private).
+        """
+        no_achievements = list(self._no_achievement_appids)
+        private = list(self._private_appids)
+        self._no_achievement_appids = []
+        self._private_appids = []
+        if no_achievements:
+            appid_log.log_no_achievements(no_achievements)
+        self._prune_games_from_list(no_achievements + private)
+        return no_achievements, private
 
     def _on_batch_completed(self, saved: int, failed: int, failures: list, canceled: bool) -> None:
-        removed = self._prune_no_achievement_games()
+        no_achievement_removed, private_removed = self._prune_removed_games()
         self._update_resume_button()
 
         lines = [f"Saved achievements for {saved} game(s)."]
-        if removed:
+        if no_achievement_removed:
             lines.append(
-                f"{len(removed)} game(s) have no achievements and were removed from the list."
+                f"{len(no_achievement_removed)} game(s) have no achievements "
+                "and were removed from the list."
+            )
+        if private_removed:
+            lines.append(
+                f"{len(private_removed)} game(s) have private game stats "
+                "and were removed from the list."
             )
         if failed:
             lines.append(f"{failed} game(s) failed.")
@@ -844,16 +865,19 @@ class MainWindow(QMainWindow):
             )
         summary = "\n".join(lines)
 
-        if failed:
+        if failed or private_removed:
             self._set_status(summary, error=True)
             sounds.play_error()
 
-            visible = failures[:10]
-            details = "\n".join(f"- {name}: {reason}" for name, reason in visible)
-            hidden = len(failures) - len(visible)
-            if hidden > 0:
-                details += f"\n... and {hidden} more."
-            QMessageBox.warning(self, APP_TITLE, f"{summary}\n\n{details}")
+            if failed:
+                visible = failures[:10]
+                details = "\n".join(f"- {name}: {reason}" for name, reason in visible)
+                hidden = len(failures) - len(visible)
+                if hidden > 0:
+                    details += f"\n... and {hidden} more."
+                QMessageBox.warning(self, APP_TITLE, f"{summary}\n\n{details}")
+            else:
+                QMessageBox.warning(self, APP_TITLE, summary)
             return
 
         self._set_status(summary)

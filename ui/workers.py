@@ -136,6 +136,7 @@ class BatchFetchAndSaveAchievementsWorker(QThread):
 
     progress = Signal(int, int, str, str)  # current (1-based), total, label, phase
     no_achievements = Signal(str)  # appid of a game with no achievements
+    private_stats = Signal(list)  # appids whose game stats are private (HTTP 403)
     preview_ready = Signal(list)  # [(label, gained, lost, is_new), ...] before saving
     pending = Signal(list)  # appids that did not succeed (for a resume)
     completed = Signal(int, int, list, bool)  # saved, failed, [(name, msg)], canceled
@@ -179,6 +180,7 @@ class BatchFetchAndSaveAchievementsWorker(QThread):
         canceled = False
         no_achievement_set: set[str] = set()
         saved_set: set[str] = set()
+        private_appids: list[str] = []
 
         # --- Phase 1: fetch (with handling of games without achievements) ------
         total = len(self.items)
@@ -207,6 +209,12 @@ class BatchFetchAndSaveAchievementsWorker(QThread):
                 limiter.note_success()
                 no_achievement_set.add(appid)
                 self.no_achievements.emit(appid)
+                continue
+            except steam_api.GameStatsPrivate:
+                # Only this game's stats are private: count it and keep going.
+                limiter.note_success()
+                private_appids.append(appid)
+                appid_log.log_private_stats([appid])
                 continue
             except steam_api.SteamAPIError as exc:
                 message = str(exc)
@@ -280,14 +288,22 @@ class BatchFetchAndSaveAchievementsWorker(QThread):
                     failures.append((label, str(exc)))
                     appid_log.log_failure([appid], type(exc).__name__, api="")
 
+        private_set = set(private_appids)
         pending = [
             appid
             for appid, _name in self.items
-            if appid not in saved_set and appid not in no_achievement_set
+            if appid not in saved_set
+            and appid not in no_achievement_set
+            and appid not in private_set
         ]
 
         logger.info(
-            "Batch finished: %d saved, %d failed, canceled=%s", saved, len(failures), canceled
+            "Batch finished: %d saved, %d failed, %d private, canceled=%s",
+            saved,
+            len(failures),
+            len(private_appids),
+            canceled,
         )
+        self.private_stats.emit(private_appids)
         self.pending.emit(pending)
         self.completed.emit(saved, len(failures), failures, canceled)

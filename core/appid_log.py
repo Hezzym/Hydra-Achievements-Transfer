@@ -27,6 +27,7 @@ REASON_NO_ACHIEVEMENTS = "REMOVED BY NO ACHIEVEMENTS"
 REASON_NO_COMMUNITY_STATS = "REMOVED BY NO COMMUNITY-VISIBLE STATS"
 REASON_UNPLAYED = "REMOVED BY NO PLAYTIME (ignore_unplayed)"
 REASON_FAILED = "NOT REMOVED - FETCH FAILURE/ERROR"
+REASON_PRIVATE_STATS = "NOT REMOVED - PRIVATE GAME STATS (HTTP 403)"
 
 # (reason, api, item) -> ordered unique AppIDs
 _sections: dict[tuple[str, str, str], list[str]] = {}
@@ -51,6 +52,10 @@ def log_unplayed(appids) -> None:
 
 def log_failure(appids, item: str, api: str = API_ACHIEVEMENTS) -> None:
     _add(REASON_FAILED, api, item, appids)
+
+
+def log_private_stats(appids) -> None:
+    _add(REASON_PRIVATE_STATS, API_ACHIEVEMENTS, "HTTP 403", appids)
 
 
 def _add(reason: str, api: str, item: str, appids) -> None:

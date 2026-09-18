@@ -19,6 +19,7 @@ PREVIEW_LIMIT = 15  # max games listed in the preview dialog
 class BatchRunner(QObject):
     progress = Signal(int, int, str, str)  # current, total, label, phase
     no_achievements = Signal(str)  # appid without achievements
+    private_stats = Signal(list)  # appids whose game stats are private
     pending = Signal(list)  # appids that failed/skipped (for a resume)
     completed = Signal(int, int, list, bool)  # saved, failed, failures, canceled
 
@@ -51,6 +52,7 @@ class BatchRunner(QObject):
         self._worker.progress.connect(self._dialog.set_progress)
         self._worker.progress.connect(self.progress)
         self._worker.no_achievements.connect(self.no_achievements)
+        self._worker.private_stats.connect(self.private_stats)
         self._worker.pending.connect(self.pending)
         self._worker.preview_ready.connect(self._on_preview_ready)
         self._worker.completed.connect(self._on_completed)
