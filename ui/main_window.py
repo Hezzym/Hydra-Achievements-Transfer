@@ -49,7 +49,7 @@ from ui.about_window import AboutWindow
 from ui.backup_window import BackupWindow
 from ui.batch_runner import BatchRunner
 from ui.settings_window import SettingsWindow
-from ui.theme import DARK_STYLESHEET
+from ui.theme import COLOR_ERROR, COLOR_SUCCESS, DARK_STYLESHEET
 from ui.widgets.field_with_link import ComboFieldWithLink, FieldWithLink
 from ui.widgets.game_grid import APPID_ROLE, GameGrid
 from ui.widgets.help_hint import HelpHint
@@ -700,13 +700,27 @@ class MainWindow(QMainWindow):
 
         self._apply_filter_and_reload()
 
-        message = "\n"
+        removed_lines: list[str] = []
         if ignored:
-            message += f"{ignored} unplayed game(s) were ignored."
+            removed_lines.append(f"{ignored} unplayed game(s) were ignored.")
         if ignored_no_stats:
-            message += f"\n{ignored_no_stats} game(s) without Steam achievements were ignored."
-        message += f"\n\nAccount games fetched and cached ({len(self.all_games)} game(s))."
-        self._set_status(message)
+            removed_lines.append(
+                f"{ignored_no_stats} game(s) without Steam achievements were ignored."
+            )
+        saved_line = f"Account games fetched and cached ({len(self.all_games)} game(s))."
+
+        status_html = "<br>".join(
+            f'<span style="color:{COLOR_ERROR}">{line}</span>' for line in removed_lines
+        )
+        if status_html:
+            status_html += "<br><br>"
+        status_html += f'<span style="color:{COLOR_SUCCESS}">{saved_line}</span>'
+        self._set_status(status_html, html=True)
+
+        message = "\n".join(removed_lines)
+        if message:
+            message += "\n\n"
+        message += saved_line
         sounds.play_success()
         QMessageBox.information(self, APP_TITLE, message)
 
@@ -857,53 +871,75 @@ class MainWindow(QMainWindow):
         )
         self._update_resume_button()
 
-        lines = [f"Saved achievements for {saved} game(s)."]
-        if no_achievement_removed:
-            lines.append(
-                f"{len(no_achievement_removed)} game(s) have no achievements "
-                "and were removed from the list."
-            )
-        if no_unlocked_removed:
-            lines.append(
-                f"{len(no_unlocked_removed)} game(s) have no unlocked achievements "
-                "and were removed from the list."
-            )
-        if private_removed:
-            lines.append(
-                f"{len(private_removed)} game(s) have private game stats "
-                "and were removed from the list."
-            )
+        # Everything that was not saved is listed first (in red); the "Saved"
+        # line is always last (in green), separated by a blank line.
+        details: list[str] = []
+        if canceled:
+            details.append("Canceled.")
         if failed:
-            lines.append(f"{failed} game(s) failed.")
-        if canceled:
-            lines.insert(0, "Canceled.")
-        if self._pending_appids:
-            lines.append(
-                f"{len(self._pending_appids)} game(s) pending — use 'Resume interrupted' to retry."
+            details.append(f"{failed} game(s) failed.")
+        if no_achievement_removed:
+            details.append(f"{len(no_achievement_removed)} game(s) have no achievements were removed.")
+        if private_removed:
+            details.append(f"{len(private_removed)} game(s) have private game stats were removed.")
+        if no_unlocked_removed:
+            details.append(
+                f"{len(no_unlocked_removed)} game(s) have no unlocked achievements were removed."
             )
-        summary = "\n".join(lines)
+        if self._pending_appids:
+            details.append(
+                f"{len(self._pending_appids)} game(s) pending — use "
+                "'Resume interrupted' to retry."
+            )
 
-        if failed or private_removed:
-            self._set_status(summary, error=True)
+        saved_line = f"Saved achievements for {saved} game(s)."
+
+        # Severity rules: error when nothing was saved, warning when some games
+        # saved and some failed, success when nothing failed and at least one
+        # game was saved.
+        if failed and saved == 0:
+            severity = "error"
+        elif failed:
+            severity = "warning"
+        elif saved:
+            severity = "success"
+        else:
+            severity = "warning"
+
+        # Status label: everything in red except the "Saved" line, in green.
+        detail_spans = [
+            f'<span style="color:{COLOR_ERROR}">{text}</span>' for text in details
+        ]
+        saved_span = f'<span style="color:{COLOR_SUCCESS}">{saved_line}</span>'
+        status_html = "<br>".join(detail_spans)
+        if status_html:
+            status_html += "<br><br>"
+        status_html += saved_span
+        self._set_status(status_html, error=(severity == "error"), html=True)
+
+        # Popup: same order as the label, with the per-game failure details
+        # inserted before the "Saved" line.
+        popup_lines = list(details)
+        if failures:
+            visible = failures[:10]
+            popup_lines.extend(f"- {name}: {reason}" for name, reason in visible)
+            hidden = len(failures) - len(visible)
+            if hidden > 0:
+                popup_lines.append(f"... and {hidden} more.")
+        popup_text = "\n".join(popup_lines)
+        if popup_text:
+            popup_text += "\n\n"
+        popup_text += saved_line
+
+        if severity == "error":
             sounds.play_error()
-
-            if failed:
-                visible = failures[:10]
-                details = "\n".join(f"- {name}: {reason}" for name, reason in visible)
-                hidden = len(failures) - len(visible)
-                if hidden > 0:
-                    details += f"\n... and {hidden} more."
-                QMessageBox.warning(self, APP_TITLE, f"{summary}\n\n{details}")
-            else:
-                QMessageBox.warning(self, APP_TITLE, summary)
-            return
-
-        self._set_status(summary)
-        if canceled:
+            QMessageBox.critical(self, APP_TITLE, popup_text)
+        elif severity == "warning":
             sounds.play_info()
+            QMessageBox.warning(self, APP_TITLE, popup_text)
         else:
             sounds.play_success()
-        QMessageBox.information(self, APP_TITLE, summary)
+            QMessageBox.information(self, APP_TITLE, popup_text)
 
     # ------------------------------------------------------------------ helpers
 
@@ -942,7 +978,8 @@ class MainWindow(QMainWindow):
             "window_maximized": self.isMaximized(),
         }
 
-    def _set_status(self, message: str, error: bool = False) -> None:
+    def _set_status(self, message: str, error: bool = False, html: bool = False) -> None:
+        self.status_label.setTextFormat(Qt.RichText if html else Qt.PlainText)
         self.status_label.setText(message)
         self.status_label.setProperty("role", "status_error" if error else "status_success")
         self.status_label.style().unpolish(self.status_label)
