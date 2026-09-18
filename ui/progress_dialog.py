@@ -8,7 +8,15 @@ runs, but it offers a "Cancel" button (and Esc) to stop the process early.
 from __future__ import annotations
 
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import QDialog, QLabel, QProgressBar, QPushButton, QVBoxLayout
+from PySide6.QtWidgets import (
+    QDialog,
+    QHBoxLayout,
+    QLabel,
+    QProgressBar,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
 
 from ui.theme import DARK_STYLESHEET
 
@@ -46,14 +54,29 @@ class ProgressDialog(QDialog):
         self.detail.setWordWrap(True)
         self.detail.setProperty("role", "hint")
 
+        self.button_minimize = QPushButton("Minimize")
+        self.button_minimize.setProperty("role", "secondary")
+        self.button_minimize.clicked.connect(self._minimize)
+
         self.button_cancel = QPushButton("Cancel")
-        self.button_cancel.setProperty("role", "secondary")
+        self.button_cancel.setProperty("role", "danger")
         self.button_cancel.clicked.connect(self.request_cancel)
+
+        buttons = QHBoxLayout()
+        buttons.addStretch(1)
+        buttons.addWidget(self.button_minimize)
+        buttons.addWidget(self.button_cancel)
 
         layout.addWidget(self.label)
         layout.addWidget(self.bar)
         layout.addWidget(self.detail)
-        layout.addWidget(self.button_cancel)
+        layout.addLayout(buttons)
+
+    def _minimize(self) -> None:
+        """Minimize the whole program (the owned modal dialog follows the parent)."""
+        parent = self.parent()
+        if isinstance(parent, QWidget):
+            parent.showMinimized()
 
     def set_progress(self, current: int, total: int, label: str, phase: str = "fetch") -> None:
         self.bar.setRange(0, total)

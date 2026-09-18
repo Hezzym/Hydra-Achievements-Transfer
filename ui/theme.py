@@ -164,6 +164,24 @@ QPushButton[role="secondary"]:hover {{
     border: 1px solid {COLOR_ACCENT};
 }}
 
+QPushButton[role="danger"] {{
+    background-color: rgba(255, 92, 92, 0.14);
+    border: 1px solid rgba(255, 92, 92, 0.45);
+    color: {COLOR_ERROR};
+    min-width: 120px;
+}}
+
+QPushButton[role="danger"]:hover {{
+    background-color: rgba(255, 92, 92, 0.24);
+    border: 1px solid {COLOR_ERROR};
+}}
+
+QPushButton[role="danger"]:disabled {{
+    background-color: {COLOR_BORDER};
+    border: 1px solid {COLOR_BORDER};
+    color: {COLOR_TEXT_MUTED};
+}}
+
 QScrollArea {{
     border: none;
 }}
