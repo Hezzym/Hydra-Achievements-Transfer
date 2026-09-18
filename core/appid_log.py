@@ -24,6 +24,7 @@ API_ACHIEVEMENTS = "ISteamUserStats/GetPlayerAchievements"
 API_OWNED_GAMES = "IPlayerService/GetOwnedGames"
 
 REASON_NO_ACHIEVEMENTS = "REMOVED BY NO ACHIEVEMENTS"
+REASON_NO_UNLOCKED = "REMOVED BY NO UNLOCKED ACHIEVEMENTS"
 REASON_NO_COMMUNITY_STATS = "REMOVED BY NO COMMUNITY-VISIBLE STATS"
 REASON_UNPLAYED = "REMOVED BY NO PLAYTIME (ignore_unplayed)"
 REASON_FAILED = "NOT REMOVED - FETCH FAILURE/ERROR"
@@ -35,6 +36,10 @@ _sections: dict[tuple[str, str, str], list[str]] = {}
 
 def log_no_achievements(appids) -> None:
     _add(REASON_NO_ACHIEVEMENTS, API_ACHIEVEMENTS, "GameHasNoStats", appids)
+
+
+def log_no_unlocked(appids) -> None:
+    _add(REASON_NO_UNLOCKED, API_ACHIEVEMENTS, "0 unlocked", appids)
 
 
 def log_no_community_stats(appids) -> None:

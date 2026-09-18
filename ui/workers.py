@@ -137,6 +137,7 @@ class BatchFetchAndSaveAchievementsWorker(QThread):
     progress = Signal(int, int, str, str)  # current (1-based), total, label, phase
     no_achievements = Signal(str)  # appid of a game with no achievements
     private_stats = Signal(list)  # appids whose game stats are private (HTTP 403)
+    no_unlocked = Signal(list)  # appids with no unlocked achievements (0 unlocked)
     preview_ready = Signal(list)  # [(label, gained, lost, is_new), ...] before saving
     pending = Signal(list)  # appids that did not succeed (for a resume)
     completed = Signal(int, int, list, bool)  # saved, failed, [(name, msg)], canceled
@@ -181,6 +182,7 @@ class BatchFetchAndSaveAchievementsWorker(QThread):
         no_achievement_set: set[str] = set()
         saved_set: set[str] = set()
         private_appids: list[str] = []
+        no_unlocked_appids: list[str] = []
 
         # --- Phase 1: fetch (with handling of games without achievements) ------
         total = len(self.items)
@@ -244,6 +246,21 @@ class BatchFetchAndSaveAchievementsWorker(QThread):
 
             fetched.append((appid, label, playerstats))
 
+        # --- Drop games with no unlocked achievements --------------------------
+        # Before showing the statistics, remove any game where the account has
+        # zero unlocked achievements (there is nothing worth transferring).
+        if fetched and not canceled:
+            kept: list[tuple[str, str, dict]] = []
+            for appid, label, playerstats in fetched:
+                converted = achievements.convert_to_gse_format(playerstats)
+                earned = sum(1 for data in converted.values() if data.get("earned"))
+                if earned == 0:
+                    no_unlocked_appids.append(appid)
+                    appid_log.log_no_unlocked([appid])
+                    continue
+                kept.append((appid, label, playerstats))
+            fetched = kept
+
         # --- Preview: compare with the current files before writing -----------
         if fetched and not canceled:
             diffs = []
@@ -289,21 +306,25 @@ class BatchFetchAndSaveAchievementsWorker(QThread):
                     appid_log.log_failure([appid], type(exc).__name__, api="")
 
         private_set = set(private_appids)
+        no_unlocked_set = set(no_unlocked_appids)
         pending = [
             appid
             for appid, _name in self.items
             if appid not in saved_set
             and appid not in no_achievement_set
             and appid not in private_set
+            and appid not in no_unlocked_set
         ]
 
         logger.info(
-            "Batch finished: %d saved, %d failed, %d private, canceled=%s",
+            "Batch finished: %d saved, %d failed, %d private, %d no-unlocked, canceled=%s",
             saved,
             len(failures),
             len(private_appids),
+            len(no_unlocked_appids),
             canceled,
         )
         self.private_stats.emit(private_appids)
+        self.no_unlocked.emit(no_unlocked_appids)
         self.pending.emit(pending)
         self.completed.emit(saved, len(failures), failures, canceled)

@@ -108,6 +108,7 @@ class MainWindow(QMainWindow):
         self.selected_appids: list[str] = []
         self._no_achievement_appids: list[str] = []
         self._private_appids: list[str] = []
+        self._no_unlocked_appids: list[str] = []
         self._pending_appids: list[str] = []
         self._syncing_selection = False
 
@@ -130,6 +131,7 @@ class MainWindow(QMainWindow):
         self._restore_window_size()
         self._batch_runner.no_achievements.connect(self._on_no_achievements)
         self._batch_runner.private_stats.connect(self._on_private_stats)
+        self._batch_runner.no_unlocked.connect(self._on_no_unlocked)
         self._batch_runner.pending.connect(self._on_batch_pending)
         self._batch_runner.completed.connect(self._on_batch_completed)
         self._load_initial_state()
@@ -770,6 +772,7 @@ class MainWindow(QMainWindow):
 
         self._no_achievement_appids = []
         self._private_appids = []
+        self._no_unlocked_appids = []
         self._pending_appids = []
         self._update_resume_button()
         self._batch_runner.start(
@@ -786,6 +789,9 @@ class MainWindow(QMainWindow):
 
     def _on_private_stats(self, appids: list) -> None:
         self._private_appids = [str(appid) for appid in appids]
+
+    def _on_no_unlocked(self, appids: list) -> None:
+        self._no_unlocked_appids = [str(appid) for appid in appids]
 
     def _on_batch_pending(self, appids: list) -> None:
         self._pending_appids = [str(appid) for appid in appids]
@@ -824,30 +830,40 @@ class MainWindow(QMainWindow):
             except OSError:
                 pass
 
-    def _prune_removed_games(self) -> tuple[list[str], list[str]]:
+    def _prune_removed_games(self) -> tuple[list[str], list[str], list[str]]:
         """
         Removes from the list the games dropped in the last batch: those with
-        no achievements and those with private stats.
+        no achievements, those with private stats and those with no unlocked
+        achievements.
 
-        Returns (no_achievements, private).
+        Returns (no_achievements, private, no_unlocked).
         """
         no_achievements = list(self._no_achievement_appids)
         private = list(self._private_appids)
+        no_unlocked = list(self._no_unlocked_appids)
         self._no_achievement_appids = []
         self._private_appids = []
+        self._no_unlocked_appids = []
         if no_achievements:
             appid_log.log_no_achievements(no_achievements)
-        self._prune_games_from_list(no_achievements + private)
-        return no_achievements, private
+        self._prune_games_from_list(no_achievements + private + no_unlocked)
+        return no_achievements, private, no_unlocked
 
     def _on_batch_completed(self, saved: int, failed: int, failures: list, canceled: bool) -> None:
-        no_achievement_removed, private_removed = self._prune_removed_games()
+        no_achievement_removed, private_removed, no_unlocked_removed = (
+            self._prune_removed_games()
+        )
         self._update_resume_button()
 
         lines = [f"Saved achievements for {saved} game(s)."]
         if no_achievement_removed:
             lines.append(
                 f"{len(no_achievement_removed)} game(s) have no achievements "
+                "and were removed from the list."
+            )
+        if no_unlocked_removed:
+            lines.append(
+                f"{len(no_unlocked_removed)} game(s) have no unlocked achievements "
                 "and were removed from the list."
             )
         if private_removed:
