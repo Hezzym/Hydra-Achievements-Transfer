@@ -5,8 +5,8 @@ Two distinct concepts live here:
 
 - ``get_app_dir()`` returns the program folder (that of ``main.py`` in source,
   or of the packaged ``.exe``). All writable data (``config.json``, ``cache/``,
-  ``gse_backup.zip``) lives relative to this folder, so the program works no
-  matter which directory it was launched from.
+  ``logs/``, ``gse_backup.zip``) lives relative to this folder, so the program
+  works no matter which directory it was launched from.
 
 - ``get_resource_path()`` resolves read-only resources bundled into the
   executable via PyInstaller's ``--add-data`` (icons, images). When frozen with
@@ -42,3 +42,4 @@ def get_resource_path(relative_path: str) -> Path:
 
 
 APP_DIR = get_app_dir()
+LOGS_DIR = APP_DIR / "logs"

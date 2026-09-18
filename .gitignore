@@ -7,9 +7,8 @@ __pycache__/
 
 config.json
 gse_backup.zip
-hydra.log*
-# Temporary diagnostic log (core/appid_log.py)
-appid_failed.txt
+# Runtime logs (core/logs.py, core/appid_log.py)
+/logs/
 build/
 dist/
 .pytest_cache/

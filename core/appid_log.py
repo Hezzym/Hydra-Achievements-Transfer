@@ -1,7 +1,7 @@
 """
 Temporary diagnostic log of AppIDs dropped or failed, grouped by reason.
 
-Writes ``appid_failed.txt`` in the program folder (APP_DIR). Each section
+Writes ``logs/_appid.log`` in the program folder (APP_DIR). Each section
 shows the reason, the Steam API used (when applicable), the item/condition
 that triggered it, and the affected AppIDs (comma-separated on a single line).
 
@@ -11,14 +11,14 @@ from __future__ import annotations
 
 import logging
 
-from core.paths import APP_DIR
+from core.paths import LOGS_DIR
 
 logger = logging.getLogger(__name__)
 
-# Set to False to stop writing appid_failed.txt entirely.
+# Set to False to stop writing _appid.log entirely.
 ENABLED = True
 
-LOG_FILE = APP_DIR / "appid_failed.txt"
+LOG_FILE = LOGS_DIR / "_appid.log"
 
 API_ACHIEVEMENTS = "ISteamUserStats/GetPlayerAchievements"
 API_OWNED_GAMES = "IPlayerService/GetOwnedGames"
@@ -28,7 +28,7 @@ REASON_NO_UNLOCKED = "REMOVED BY NO UNLOCKED ACHIEVEMENTS"
 REASON_NO_COMMUNITY_STATS = "REMOVED BY NO COMMUNITY-VISIBLE STATS"
 REASON_UNPLAYED = "REMOVED BY NO PLAYTIME (ignore_unplayed)"
 REASON_FAILED = "NOT REMOVED - FETCH FAILURE/ERROR"
-REASON_PRIVATE_STATS = "NOT REMOVED - PRIVATE GAME STATS (HTTP 403)"
+REASON_PRIVATE_STATS = "REMOVED BY PRIVATE GAME STATS (HTTP 403)"
 
 # (reason, api, item) -> ordered unique AppIDs
 _sections: dict[tuple[str, str, str], list[str]] = {}
@@ -89,6 +89,7 @@ def _flush() -> None:
     if not blocks:
         return
     try:
+        LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
         LOG_FILE.write_text("\n\n".join(blocks) + "\n", encoding="utf-8")
     except OSError as exc:
         logger.warning("Could not write %s: %s", LOG_FILE.name, exc)
