@@ -2,8 +2,6 @@
 
 > Desktop tool to edit and transfer Steam achievements for games using **GSE Saves** (Goldberg Steam Emulator), pulling real account data via the **Steam Web API**.
 
-**I'm not sure if I'll continue this project. Hydra recently added a native function, and while this program still has some advantages for now, I've lost the motivation to keep working on it.**
-
 [![Python](https://img.shields.io/badge/Python-3.9%2B-blue)](https://www.python.org/)
 [![PySide6](https://img.shields.io/badge/UI-PySide6%20%2F%20Qt-green)](https://doc.qt.io/qtforpython/)
 [![License](https://img.shields.io/badge/license-GPLv3-lightgrey)](#license)
@@ -59,7 +57,6 @@ Yes, but the SteamID field must be filled in with your real/main account. The AP
 ## To do List
 * [x] - Improve the search system and avoid unnecessary games in the list.
 * [ ] - Epic Games and PlayStation Support
-* [ ] - Linux support (Not guaranteed).
 
 ## AI Disclaimer
 
